@@ -1,0 +1,100 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+
+
+\title{\textbf{Лабораторная работа №2}}
+\usepackage{sagetex}
+\setlength{\sagetexindent}{10ex}
+
+\usepackage{geometry}
+\geometry{a4paper, total={170mm,257mm}, left=20mm, right=20mm, top=20mm, bottom=20mm}
+
+\begin{document}
+
+\maketitle
+
+\section*{Задание 3. Привести уравнение к каноническому виду}
+\textbf{Определяем переменные \textit{x, y, z} и функцию \textit{func} моего варианта.}
+\begin{sageblock}
+var("x y z")
+func = 11*x**2 - 2*x*y - 2*x*z + 2*y*z + 9*z**2 - 4*x + y + z
+\end{sageblock}
+\textbf{График данной функции:} 
+\begin{sageblock}
+plot_start = implicit_plot3d(func, (x,-5,5), (y,-5,5), (z,-5,5), plot_points=100)
+\end{sageblock}
+\sageplot{plot_start}
+
+\textbf{Составляем матрицу квадратичной формы \textit{A} , столбец коэффициентов линейной формы \textit{a} и единичную матрицу \textit{E}.}
+
+\begin{sageblock}
+A = matrix([[11, -1, -1], [-1, 0, 1], [-1, 1, 9]])
+a = matrix([[-2], [1/2], [1/2]])
+E = matrix([[1, 0, 0], [0,1,0], [0,0,1]])
+\end{sageblock}
+
+\textbf{Находим корни характеристического уравнения.}
+\begin{sageblock}
+var("l l1 l2 l3")
+lvct = vector([l1, l2, l3])
+lambdas = solve(det(A-l*E), l)
+\end{sageblock}
+
+
+\textbf{Находим взаимно перпендикулярные единичные собственные векторы \textit{s1, s2, s3}, соответствующие корням \textit{l1, l2, l3}.}
+\begin{sageblock}
+svcts = []
+for el in lambdas:
+    nums = []
+    lhs = (A-el.rhs()*E)*lvct
+    res = solve([lhs[0] == 0, lhs[1] == 0, lhs[2] == 0], l1, l2, l3)[0]   
+    for i in range(len(res)):
+        if len(res[i].rhs().variables()) == 0:
+            nums.append(res[i].rhs())
+        else:
+            varname = res[i].rhs().variables()[0]
+            d = {varname: 1}
+            nums.append(res[i].rhs().subs(d).n())
+    svcts.append(vector(nums))
+    
+for i in range(len(lambdas)):
+    lambdas[i] = real_part(lambdas[i].rhs().n())
+\end{sageblock}
+
+\textbf{Нормируем эти векторы.}
+\begin{sageblock}
+normvcts = []
+for el in svcts:
+    norm_lvct = (el / sqrt((el*el).n())).n()
+    normvcts.append(norm_lvct)
+
+\end{sageblock}
+
+\textbf{Получаем матрицу $S^T$ и получаем $a' = S^T*a$.}
+\begin{sageblock}
+ST = matrix([[0, 0, 0],[0, 0, 0],[0, 0, 0]])
+for i in range(len(normvcts)):
+    for j in range(len(normvcts[i])):
+        ST[i,j] = normvcts[i][j]
+
+a_ = ST*a
+show("a\': ", tuple(a_))
+\end{sageblock}
+
+\textbf{Так как \textit{a'} = 0, то получаем канонический вид нашей функции.}
+\begin{sageblock}
+kanon_func = lambdas[0]*x^2 + lambdas[1]*y^2 + lambdas[2]*z^2
+show(kanon_func)
+\end{sageblock}
+\begin{center}
+$\sage{lambdas[0]}*x^2 \sage{lambdas[1]}*y^2 + \sage{lambdas[2]}*z^2$
+\end{center}
+
+\textbf{График функции, приведенной к каноническому виду:} 
+\begin{sageblock}
+plot_end = implicit_plot3d(kanon_func, (x,-5,5), (y,-5,5), (z,-5,5), plot_points=100)
+\end{sageblock}
+\sageplot{plot_end}
+
+\end{document}
